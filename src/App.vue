@@ -29,6 +29,23 @@
           <font-awesome-icon :icon="['fas', tempIcon]" />
           <span class="tooltiptext">Temperatur</span> 
         </button>
+
+        <div class="tooltip">
+          <select v-model="languageModel" class="button" @change="updateLlm" aria-label="Sprachmodell wählen">
+            <option value="1">Mistral</option>
+            <option value="2">Gpt-Oss</option>
+            <option value="3">DeepSeek</option>
+            <option value="4">Qwen3</option>
+          </select>
+          <span class="tooltiptext">Modell wählen</span>
+        </div>
+        <!-- 
+        llmodel_1 = "mistralai/Mistral-Small-3.2-24B-Instruct-2506"
+        llmodel_2 = "openai/gpt-oss-120b"
+        llmodel_3 = "deepseek-ai/DeepSeek-V3.1"
+        llmodel_4 = "Qwen/Qwen3-30B-A3B"
+
+        -->
         <!-- 
         <button @click="submit" class="button tooltip">
           <span class="tooltiptext">KI befragen</span>
@@ -88,6 +105,8 @@ const showVideo = ref(false);
 const videoSrc = ref("media/baumvideo.mp4");
 
 const showInfo = ref(false);
+
+const languageModel = ref("1");
 
 
 const cardListRef = ref<InstanceType<typeof CardList> | null>(null);
@@ -166,6 +185,10 @@ const openVideo = () => {
   showVideo.value = true
 }
 
+const updateLlm = () => {
+  console.log("Selected language model:", languageModel.value);
+}
+
 
 function handleLoginSuccess(token: string) {
   localStorage.setItem("auth-token", token)
@@ -173,7 +196,7 @@ function handleLoginSuccess(token: string) {
   showLogin.value = false
 }
 
-const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperature: number, seed: number) => {
+const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperature: number, seed: number, model: number = 1) => {
   // Placeholder for LLM call logic
   const token = localStorage.getItem("auth-token");
   if (!token) {
@@ -182,11 +205,12 @@ const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperatu
   }
   console.log("LLM call initiated");
   try {
-    const payload: { query: string; prompt: string; context?: string; temperature?: number; seed?: number } = {
+    const payload: { query: string; prompt: string; context?: string; temperature?: number; seed?: number; model?: number } = {
       query: q,
       prompt: p,
       temperature: temperature,
-      seed: seed
+      seed: seed,
+      model: model
     };
     if (ctx) {
       payload.context = (cnd && cnd.length > 0) ? ctx + "\n" + cnd : ctx
@@ -281,7 +305,30 @@ const submit = async () => {
       temp = 1.0
       break;
   }
-  const r = await llmCall(p, context.value ? context.value : "", cd ? cd : "", q, temp, 1234 * (10 * temp));
+  let llm = 1
+  switch (languageModel.value) {
+    case "1":
+      // mistral
+      llm = 1
+      break;
+    case "2":
+      // gpt-oss
+      llm = 2 
+      break;
+    case "3":
+      // deepdeek
+      llm = 3  
+      break;
+    case "4":
+      // qwen3
+      llm = 4
+      break;
+    default:
+      // mistral
+      llm = 1
+      break;
+  }
+  const r = await llmCall(p, context.value ? context.value : "", cd ? cd : "", q, temp, 1234 * (10 * temp), llm);
   loading.value = false;
   if (typeof r === "string") {
     statusText.value = "Fertig";
@@ -305,7 +352,8 @@ const ctxSearch = async () => {
     let classes: string[] = [];
     // for llm, build the call params
     if (classifier?.value) {
-      const r = await llmCall(classifier?.value, "", "", query.value, 0.0, 42);
+      // always use model 1 for context search
+      const r = await llmCall(classifier?.value, "", "", query.value, 0.0, 42, 1);
       if (typeof r === "string") {
         classes = r.split(",").map(s => s.trim()).filter(s => s.length > 0);
         console.log("LLM classification results:", classes);

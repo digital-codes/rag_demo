@@ -137,6 +137,13 @@ if (isset($data['temperature'])) {
     $temperature = 0.5; // default temperature
 }
 
+if (isset($data['model'])) {
+    $modelChoice = (int)$data['model'];
+    logError("Model choice: $modelChoice", $logFile);
+} else {
+    $modelChoice = 1; // default model
+}
+
 
 if (isset($data['context'])) {
     // add context to query
@@ -168,6 +175,39 @@ if (!$configLlm) {
 // Call the remote LLM API
 $apiKey = $configLlm['apiKey'];
 $model = $configLlm['llmodel'];
+
+// optionally overwrite model based on input
+switch ($modelChoice) {
+    case 1:
+        if (isset($configLlm['llmodel_1']) && $configLlm['llmodel_1'] !== '') {
+            $model = $configLlm['llmodel_1'];
+            logError("Switching model to: $model", $logFile);
+        }
+        break;
+    case 2:
+        if (isset($configLlm['llmodel_2']) && $configLlm['llmodel_2'] !== '') {
+            $model = $configLlm['llmodel_2'];
+            logError("Switching model to: $model", $logFile);
+        }
+        break;
+    case 3:
+        if (isset($configLlm['llmodel_3']) && $configLlm['llmodel_3'] !== '') {
+            $model = $configLlm['llmodel_3'];
+            logError("Switching model to: $model", $logFile);
+        }
+        break;
+    case 4:
+        if (isset($configLlm['llmodel_4']) && $configLlm['llmodel_4'] !== '') {
+            $model = $configLlm['llmodel_4'];
+            logError("Switching model to: $model", $logFile);
+        }
+        break;
+    default:
+        // keep default
+        logError("Keeping model: $model", $logFile);
+        break;
+}
+
 $url = $configLlm['llurl'];
 logError("Using remote LLM API at $url, model $model, temperature $temperature, seed $seed", $logFile);
 
