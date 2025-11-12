@@ -8,7 +8,8 @@
         class="codeInput"
         placeholder="Namen"
       />
-      <input
+      <input 
+        type="password"
         v-model="code"
         class="codeInput"
         placeholder="Passwort"

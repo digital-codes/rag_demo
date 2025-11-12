@@ -29,10 +29,12 @@
           <font-awesome-icon :icon="['fas', tempIcon]" />
           <span class="tooltiptext">Temperatur</span> 
         </button>
+        <!-- 
         <button @click="submit" class="button tooltip">
           <span class="tooltiptext">KI befragen</span>
           Absenden
         </button>
+        -->
         <button @click="download" class="button tooltip">
           <span class="tooltiptext">Download</span>
           Download
@@ -54,10 +56,11 @@
       <!-- EditFields -->
       <div class="editfields-container">
         <EditField class="editfield" title="Frage" v-model:fieldContent="query" :disabled="false" ref="queryFieldRef"
-          button="Suche" @button-click="ctxSearch" :comments="queryComments" />
+          button="Suche" @button-click="ctxSearch" :comments="queryComments" tooltip="Was wissen wir?" />
         <EditField class="editfield" title="Kontext" v-model:fieldContent="context" :disabled="false" button="Löschen"
           @button-click="ctxClear" />
-        <EditField class="editfield" title="Antwort" v-model:fieldContent="response" :disabled="true" />
+        <EditField class="editfield" title="Antwort" v-model:fieldContent="response" :disabled="true" 
+        button="Absenden" @button-click="submit" tooltip="KI befragen"/>
       </div>
     </div>
   </div>

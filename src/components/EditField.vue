@@ -4,7 +4,10 @@
     <!-- Header -->
     <div class="cardHeader">
       <h3>{{ title }}</h3>
-      <button v-if="button" @click="$emit('button-click')">{{ button }}</button>
+      <button v-if="button" class="button tooltip" @click="$emit('button-click')">
+        <span v-if='tooltip != ""' class="tooltiptext">{{tooltip}}</span>
+        {{ button }}
+      </button>
     </div>
 
     <!-- Textarea – full‑width, non‑resizable, vertical scroll -->
@@ -31,11 +34,13 @@ const props = withDefaults(defineProps<{
     title?: string;
     disabled?: boolean;
     button?: string;
+    tooltip?: string;
     comments?: string | null;
 }>(), {
     title: 'No title',
     disabled: false,
     button: '',
+    tooltip: '',
     comments: null
 });
 const placeHolder = computed(() => fieldContent.value == "" ? (disabled? '':'Write something…') : fieldContent.value);
