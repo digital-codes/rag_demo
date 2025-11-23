@@ -91,12 +91,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { watch } from "vue";
+//import { watch } from "vue";
 import CardList from "./components/CardList.vue";
 import EditField from "./components/EditField.vue";
 import LoginPopup from "./components/LoginPop.vue";
 import VideoPopup from "./components/VideoPop.vue";
 import InfoPopup from "./components/InfoPop.vue";
+
+import sanitizeHtml from 'sanitize-html';
+
 
 const showLogin = ref(false)
 const loggedIn = ref(false)
@@ -140,13 +143,13 @@ const toggleTemperature = () => {
   }
 }
 
-
+/*
 // query is bound to modelValue of EditField
 watch(query, (newVal, oldVal) => {
   console.log("query changed:", { newVal, oldVal });
   console.log("QueryField content:", query.value);
 });
-
+*/
 
 const download = () => {
   const p = cardListRef.value?.getCombinedText().trim() ?? "";
@@ -196,6 +199,20 @@ function handleLoginSuccess(token: string) {
   showLogin.value = false
 }
 
+
+/**
+ * Remove non‑printable Unicode characters and normalize whitespace.
+ */
+const normalizeText = (input: string): string => {
+  // NFC normalizes composed characters (e.g., é = e + ´)
+  const normalized = input.normalize('NFC');
+
+  // Collapse multiple spaces/tabs into a single space
+  return normalized.replace(/\s+/g, ' ').trim();
+}
+
+
+
 const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperature: number, seed: number, model: number = 1) => {
   // Placeholder for LLM call logic
   const token = localStorage.getItem("auth-token");
@@ -204,16 +221,31 @@ const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperatu
     return null;
   }
   console.log("LLM call initiated");
+  const sanitizedPrompt = sanitizeHtml(p, {
+    allowedTags: [],
+    allowedAttributes: {}
+  })
+  console.log("Sanitized prompt:", sanitizedPrompt);
+  const sanitizedContext = sanitizeHtml(ctx, {
+    allowedTags: [],
+    allowedAttributes: {}
+  })
+  console.log("Sanitized context:", sanitizedContext);
+  const sanitizedQuery = sanitizeHtml(q, {
+    allowedTags: [],
+    allowedAttributes: {}
+  })
+  console.log("Sanitized query:", sanitizedQuery);
   try {
     const payload: { query: string; prompt: string; context?: string; temperature?: number; seed?: number; model?: number } = {
-      query: q,
-      prompt: p,
+      query: normalizeText(sanitizedQuery),
+      prompt: normalizeText(sanitizedPrompt),
       temperature: temperature,
       seed: seed,
       model: model
     };
-    if (ctx) {
-      payload.context = (cnd && cnd.length > 0) ? ctx + "\n" + cnd : ctx
+    if (sanitizedContext) {
+      payload.context = (cnd && cnd.length > 0) ? normalizeText(sanitizedContext) + "\n" + cnd : normalizeText(sanitizedContext);
     }
     statusText.value = "Sende Anfrage …";
     const res = await fetch("php/llamaChat.php", {
@@ -272,6 +304,11 @@ const submit = async () => {
   console.log("Submitting data:");
   const q = query.value.trim();
   console.log("Query:", q);
+  if (q.length === 0) {
+    statusText.value = "Query fehlt";
+    response.value = "Bitte fügen Sie vor dem Absenden einen Query-Text hinzu.";
+    return;
+  }
   const p = cardListRef.value?.getCombinedText().trim() ?? "";
   console.log("Prompt:", p);
   if (p.length === 0) {
