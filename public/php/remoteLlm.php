@@ -8,15 +8,19 @@ function remoteQuery($key, $model, $url, $prompt, $query, $temperature = 0.5, $s
     ];
 
     // Add the current user query
+    // In PHP, using $array[] = $value appends $value at the next numeric index.
     $messages[] = ["role" => "user", "content" => $query];
 
-    // Prepare request payload
-    $payload = json_encode([
+    // Prepare request payload. mistral.ai doesn't support 'seed'
+    $body = [
         "model" => $model,
         "messages" => $messages,
         "temperature" => $temperature,
-        "seed" => $seed
-    ]);
+    ];
+    if (stripos($url, 'mistral.ai') === false) {
+        $body['seed'] = $seed;
+    }
+    $payload = json_encode($body);
 
     // Set up cURL
     $ch = curl_init($url);
