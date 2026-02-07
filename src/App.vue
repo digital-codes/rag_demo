@@ -29,10 +29,29 @@
           <font-awesome-icon :icon="['fas', tempIcon]" />
           <span class="tooltiptext">Temperatur</span> 
         </button>
+
+        <div class="tooltip">
+          <select v-model="languageModel" class="button" @change="updateLlm" aria-label="Sprachmodell wählen">
+            <option value="1">Mistral</option>
+            <option value="2">Gpt-Oss</option>
+            <option value="3">DeepSeek</option>
+            <option value="4">Qwen3</option>
+          </select>
+          <span class="tooltiptext">Modell wählen</span>
+        </div>
+        <!-- 
+        llmodel_1 = "mistralai/Mistral-Small-3.2-24B-Instruct-2506"
+        llmodel_2 = "openai/gpt-oss-120b"
+        llmodel_3 = "deepseek-ai/DeepSeek-V3.1"
+        llmodel_4 = "Qwen/Qwen3-30B-A3B"
+
+        -->
+        <!-- 
         <button @click="submit" class="button tooltip">
           <span class="tooltiptext">KI befragen</span>
           Absenden
         </button>
+        -->
         <button @click="download" class="button tooltip">
           <span class="tooltiptext">Download</span>
           Download
@@ -54,10 +73,11 @@
       <!-- EditFields -->
       <div class="editfields-container">
         <EditField class="editfield" title="Frage" v-model:fieldContent="query" :disabled="false" ref="queryFieldRef"
-          button="Suche" @button-click="ctxSearch" :comments="queryComments" />
+          button="Suche" @button-click="ctxSearch" :comments="queryComments" tooltip="Was wissen wir?" />
         <EditField class="editfield" title="Kontext" v-model:fieldContent="context" :disabled="false" button="Löschen"
           @button-click="ctxClear" />
-        <EditField class="editfield" title="Antwort" v-model:fieldContent="response" :disabled="true" />
+        <EditField class="editfield" title="Antwort" v-model:fieldContent="response" :disabled="true" 
+        button="Absenden" @button-click="submit" tooltip="KI befragen"/>
       </div>
     </div>
   </div>
@@ -71,12 +91,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { watch } from "vue";
+//import { watch } from "vue";
 import CardList from "./components/CardList.vue";
 import EditField from "./components/EditField.vue";
 import LoginPopup from "./components/LoginPop.vue";
 import VideoPopup from "./components/VideoPop.vue";
 import InfoPopup from "./components/InfoPop.vue";
+
+import sanitizeHtml from 'sanitize-html';
+
 
 const showLogin = ref(false)
 const loggedIn = ref(false)
@@ -85,6 +108,8 @@ const showVideo = ref(false);
 const videoSrc = ref("media/baumvideo.mp4");
 
 const showInfo = ref(false);
+
+const languageModel = ref("1");
 
 
 const cardListRef = ref<InstanceType<typeof CardList> | null>(null);
@@ -118,13 +143,13 @@ const toggleTemperature = () => {
   }
 }
 
-
+/*
 // query is bound to modelValue of EditField
 watch(query, (newVal, oldVal) => {
   console.log("query changed:", { newVal, oldVal });
   console.log("QueryField content:", query.value);
 });
-
+*/
 
 const download = () => {
   const p = cardListRef.value?.getCombinedText().trim() ?? "";
@@ -163,6 +188,10 @@ const openVideo = () => {
   showVideo.value = true
 }
 
+const updateLlm = () => {
+  console.log("Selected language model:", languageModel.value);
+}
+
 
 function handleLoginSuccess(token: string) {
   localStorage.setItem("auth-token", token)
@@ -170,7 +199,21 @@ function handleLoginSuccess(token: string) {
   showLogin.value = false
 }
 
-const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperature: number, seed: number) => {
+
+/**
+ * Remove non‑printable Unicode characters and normalize whitespace.
+ */
+const normalizeText = (input: string): string => {
+  // NFC normalizes composed characters (e.g., é = e + ´)
+  const normalized = input.normalize('NFC');
+
+  // Collapse multiple spaces/tabs into a single space
+  return normalized.replace(/\s+/g, ' ').trim();
+}
+
+
+
+const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperature: number, seed: number, model: number = 1) => {
   // Placeholder for LLM call logic
   const token = localStorage.getItem("auth-token");
   if (!token) {
@@ -178,15 +221,31 @@ const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperatu
     return null;
   }
   console.log("LLM call initiated");
+  const sanitizedPrompt = sanitizeHtml(p, {
+    allowedTags: [],
+    allowedAttributes: {}
+  })
+  console.log("Sanitized prompt:", sanitizedPrompt);
+  const sanitizedContext = sanitizeHtml(ctx, {
+    allowedTags: [],
+    allowedAttributes: {}
+  })
+  console.log("Sanitized context:", sanitizedContext);
+  const sanitizedQuery = sanitizeHtml(q, {
+    allowedTags: [],
+    allowedAttributes: {}
+  })
+  console.log("Sanitized query:", sanitizedQuery);
   try {
-    const payload: { query: string; prompt: string; context?: string; temperature?: number; seed?: number } = {
-      query: q,
-      prompt: p,
+    const payload: { query: string; prompt: string; context?: string; temperature?: number; seed?: number; model?: number } = {
+      query: normalizeText(sanitizedQuery),
+      prompt: normalizeText(sanitizedPrompt),
       temperature: temperature,
-      seed: seed
+      seed: seed,
+      model: model
     };
-    if (ctx) {
-      payload.context = (cnd && cnd.length > 0) ? ctx + "\n" + cnd : ctx
+    if (sanitizedContext) {
+      payload.context = (cnd && cnd.length > 0) ? normalizeText(sanitizedContext) + "\n" + cnd : normalizeText(sanitizedContext);
     }
     statusText.value = "Sende Anfrage …";
     const res = await fetch("php/llamaChat.php", {
@@ -245,6 +304,11 @@ const submit = async () => {
   console.log("Submitting data:");
   const q = query.value.trim();
   console.log("Query:", q);
+  if (q.length === 0) {
+    statusText.value = "Query fehlt";
+    response.value = "Bitte fügen Sie vor dem Absenden einen Query-Text hinzu.";
+    return;
+  }
   const p = cardListRef.value?.getCombinedText().trim() ?? "";
   console.log("Prompt:", p);
   if (p.length === 0) {
@@ -278,7 +342,30 @@ const submit = async () => {
       temp = 1.0
       break;
   }
-  const r = await llmCall(p, context.value ? context.value : "", cd ? cd : "", q, temp, 1234 * (10 * temp));
+  let llm = 1
+  switch (languageModel.value) {
+    case "1":
+      // mistral
+      llm = 1
+      break;
+    case "2":
+      // gpt-oss
+      llm = 2 
+      break;
+    case "3":
+      // deepdeek
+      llm = 3  
+      break;
+    case "4":
+      // qwen3
+      llm = 4
+      break;
+    default:
+      // mistral
+      llm = 1
+      break;
+  }
+  const r = await llmCall(p, context.value ? context.value : "", cd ? cd : "", q, temp, 1234 * (10 * temp), llm);
   loading.value = false;
   if (typeof r === "string") {
     statusText.value = "Fertig";
@@ -302,7 +389,8 @@ const ctxSearch = async () => {
     let classes: string[] = [];
     // for llm, build the call params
     if (classifier?.value) {
-      const r = await llmCall(classifier?.value, "", "", query.value, 0.0, 42);
+      // always use model 1 for context search
+      const r = await llmCall(classifier?.value, "", "", query.value, 0.0, 42, 1);
       if (typeof r === "string") {
         classes = r.split(",").map(s => s.trim()).filter(s => s.length > 0);
         console.log("LLM classification results:", classes);

@@ -8,16 +8,28 @@ function remoteQuery($key, $model, $url, $prompt, $query, $temperature = 0.5, $s
     ];
 
     // Add the current user query
+    // In PHP, using $array[] = $value appends $value at the next numeric index.
     $messages[] = ["role" => "user", "content" => $query];
 
-    // Prepare request payload
-    $payload = json_encode([
+    // Prepare request payload. mistral.ai doesn't support 'seed'
+    $body = [
         "model" => $model,
-        "messages" => $messages,
-        "temperature" => $temperature,
-        "seed" => $seed
-    ]);
-
+        "messages" => $messages
+    ];
+    // with temperature for mistral.ai
+    if (stripos($url, 'mistral') !== false) {
+        $body['temperature'] = $temperature;
+    }
+    // with temperature and seed for deepinfra
+    if (stripos($url, 'deepinfra') !== false) {
+        $body['temperature'] = $temperature;
+        $body['seed'] = $seed;
+    }
+    # no streaming fo rollama 
+    if (stripos($url, 'ollama') !== false) {
+        $body['stream'] = false;
+    }
+    $payload = json_encode($body);
     // Set up cURL
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -37,7 +49,12 @@ function remoteQuery($key, $model, $url, $prompt, $query, $temperature = 0.5, $s
     // Handle the response
     if ($httpCode === 200) {
         $result = json_decode($response, true);
-        $reply = $result['choices'][0]['message']['content'] ?? "No reply.";
+        // ollama response is different
+        if (stripos($url, 'ollama') !== false) {
+            $reply = $result['message']['content'] ?? "No reply.";
+        } else {
+            $reply = $result['choices'][0]['message']['content'] ?? "No reply.";
+        }
         $result = [
             'status' => 'ok',
             'reply' => $reply,

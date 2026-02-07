@@ -1,10 +1,11 @@
 <?php
 
 declare(strict_types=1);
-
+/* access control handled in site config. don't duplicate !!!
 header("Access-Control-Allow-Headers: *");
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+ */
 
 use Lcobucci\JWT\Encoding\ChainedFormatter;
 use Lcobucci\JWT\Encoding\JoseEncoder;
@@ -256,7 +257,29 @@ function login() {
     echo json_encode(array("error" => "Invalid username or password (final)"));
     }
 
+
+// ----------------------------------------------------
+// 2️⃣  Handle preflight (OPTIONS)
+// ----------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    // The browser is checking what’s allowed; we don’t send a body
+    http_response_code(204); // No Content
+    exit;
+}
+
+// ----------------------------------------------------
+// 3️⃣  Handle login (POST)
+// ----------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     login();
+	exit;
+}
+
+// ----------------------------------------------------
+// 4️⃣  For any other HTTP verb
+// ----------------------------------------------------
+http_response_code(405); // Method Not Allowed
+echo json_encode(['error' => 'Only POST supported']);
 
 
 ?>
