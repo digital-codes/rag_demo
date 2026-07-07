@@ -138,12 +138,17 @@ const languageModel = ref("1");
 /* ---- Layout detection ---- */
 const mobileQuery = window.matchMedia('(max-width: 768px)');
 const useTabLayout = ref<boolean>(mobileQuery.matches);
+const layoutManualOverride = ref<boolean>(false);
 
 function onMobileQueryChange(e: MediaQueryListEvent) {
-  useTabLayout.value = e.matches;
+  // Only auto-update when the user has not made an explicit choice
+  if (!layoutManualOverride.value) {
+    useTabLayout.value = e.matches;
+  }
 }
 
 function toggleLayout() {
+  layoutManualOverride.value = true;
   useTabLayout.value = !useTabLayout.value;
 }
 
@@ -533,7 +538,7 @@ const getWeather = async () => {
 
 onMounted(() => {
   mobileQuery.addEventListener('change', onMobileQueryChange);
-  // remove orphae token
+  // remove orphan token
   localStorage.removeItem("auth-token")
   // Check saved preference
   const saved = localStorage.getItem("app-theme");
