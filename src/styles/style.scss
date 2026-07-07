@@ -30,6 +30,7 @@
   --color-failed-dark: #e00;
 
   --header-height: 60px;
+  --tab-bar-height: 56px;
   --gap: 8px;
 }
 
@@ -38,6 +39,92 @@
   :root {
     --header-height: 80px;
   }
+}
+
+/* =========================================================
+   Tab Layout (mobile / compact)
+   ========================================================= */
+.tab-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height));
+  min-height: 0;
+}
+
+.tab-content {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--gap);
+
+  // let the single child component fill the panel
+  > * {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
+}
+
+.tab-bar {
+  flex-shrink: 0;
+  height: var(--tab-bar-height);
+  display: flex;
+  border-top: 1px solid var(--border-light);
+  background: var(--control-bg-light);
+}
+
+.app-container.dark .tab-bar {
+  border-top-color: var(--border-dark);
+  background: var(--control-bg-dark);
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.55;
+  padding: 4px 2px;
+  font: inherit;
+  transition: opacity 0.2s, color 0.2s;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &.active {
+    opacity: 1;
+  }
+}
+
+.app-container.light .tab-btn.active {
+  color: var(--text-accent-light);
+}
+
+.app-container.dark .tab-btn.active {
+  color: var(--text-accent-dark);
+}
+
+.tab-label {
+  font-size: 0.68rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 /* =========================================================

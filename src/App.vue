@@ -56,6 +56,10 @@
           <span class="tooltiptext">Download</span>
           Download
         </button>
+        <button class="button tooltip" @click="toggleLayout">
+          <font-awesome-icon :icon="['fas', useTabLayout ? 'display' : 'mobile-screen']" />
+          <span class="tooltiptext">{{ useTabLayout ? 'Desktop-Ansicht' : 'Mobile-Ansicht' }}</span>
+        </button>
         <button class="button tooltip" @click="toggleTheme">
           <font-awesome-icon :icon="['fas', theme === 'light' ? 'moon' : 'sun']" />
           <span class="tooltiptext">{{ theme === 'light' ? 'Dunkel' : 'Hell' }}</span>
@@ -63,8 +67,8 @@
       </div>
     </header>
 
-    <!-- Main layout -->
-    <div class="wrapper">
+    <!-- Desktop Grid Layout -->
+    <div v-if="!useTabLayout" class="wrapper">
       <!-- CardList -->
       <div class="cardlist-container">
         <CardList ref="cardListRef" title="Prompt" />
@@ -80,6 +84,25 @@
         button="Absenden" @button-click="submit" tooltip="KI befragen"/>
       </div>
     </div>
+
+    <!-- Mobile Tab Layout -->
+    <TabLayout v-else>
+      <template #prompt>
+        <CardList ref="cardListRef" title="Prompt" />
+      </template>
+      <template #question>
+        <EditField title="Frage" v-model:fieldContent="query" :disabled="false" ref="queryFieldRef"
+          button="Suche" @button-click="ctxSearch" :comments="queryComments" tooltip="Was wissen wir?" />
+      </template>
+      <template #context>
+        <EditField title="Kontext" v-model:fieldContent="context" :disabled="false" button="Löschen"
+          @button-click="ctxClear" />
+      </template>
+      <template #answer>
+        <EditField title="Antwort" v-model:fieldContent="response" :disabled="true"
+          button="Absenden" @button-click="submit" tooltip="KI befragen" />
+      </template>
+    </TabLayout>
   </div>
 
   <!-- Login popup -->
@@ -90,10 +113,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 //import { watch } from "vue";
 import CardList from "./components/CardList.vue";
 import EditField from "./components/EditField.vue";
+import TabLayout from "./components/TabLayout.vue";
 import LoginPopup from "./components/LoginPop.vue";
 import VideoPopup from "./components/VideoPop.vue";
 import InfoPopup from "./components/InfoPop.vue";
@@ -110,6 +134,23 @@ const videoSrc = ref("media/baumvideo.mp4");
 const showInfo = ref(false);
 
 const languageModel = ref("1");
+
+/* ---- Layout detection ---- */
+const mobileQuery = window.matchMedia('(max-width: 768px)');
+const useTabLayout = ref<boolean>(mobileQuery.matches);
+const layoutManualOverride = ref<boolean>(false);
+
+function onMobileQueryChange(e: MediaQueryListEvent) {
+  // Only auto-update when the user has not made an explicit choice
+  if (!layoutManualOverride.value) {
+    useTabLayout.value = e.matches;
+  }
+}
+
+function toggleLayout() {
+  layoutManualOverride.value = true;
+  useTabLayout.value = !useTabLayout.value;
+}
 
 
 const cardListRef = ref<InstanceType<typeof CardList> | null>(null);
@@ -496,7 +537,8 @@ const getWeather = async () => {
 }
 
 onMounted(() => {
-  // remove orphae token
+  mobileQuery.addEventListener('change', onMobileQueryChange);
+  // remove orphan token
   localStorage.removeItem("auth-token")
   // Check saved preference
   const saved = localStorage.getItem("app-theme");
@@ -551,6 +593,10 @@ onMounted(() => {
     console.log(weather);
   });
 
+});
+
+onUnmounted(() => {
+  mobileQuery.removeEventListener('change', onMobileQueryChange);
 });
 
 function toggleTheme() {
