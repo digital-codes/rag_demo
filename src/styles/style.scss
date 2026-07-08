@@ -31,14 +31,8 @@
 
   --header-height: 60px;
   --tab-bar-height: 56px;
+  --tab-hint-height: 26px;
   --gap: 8px;
-}
-
-/* header wraps on smaller screens. provide room for elements */
-@media (max-width: 599px) {
-  :root {
-    --header-height: 80px;
-  }
 }
 
 /* =========================================================
@@ -47,7 +41,7 @@
 .tab-layout {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--header-height));
+  flex: 1 1 0;
   min-height: 0;
 }
 
@@ -121,6 +115,38 @@
   color: var(--text-accent-dark);
 }
 
+.tab-hint {
+  flex-shrink: 0;
+  height: var(--tab-hint-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-top: 1px solid var(--border-light);
+  background: var(--control-bg-light);
+}
+
+.app-container.dark .tab-hint {
+  border-top-color: var(--border-dark);
+  background: var(--control-bg-dark);
+}
+
+.tab-hint-text {
+  font-size: 0.75rem;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-container.light .tab-hint-text {
+  color: var(--text-accent-light);
+}
+
+.app-container.dark .tab-hint-text {
+  color: var(--text-accent-dark);
+}
+
 .tab-label {
   font-size: 0.68rem;
   line-height: 1;
@@ -167,18 +193,77 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  height: var(--header-height);
+  min-height: var(--header-height);
+  height: auto;
   display: flex;
   align-items: center;
-  /* vertical centering for all children */
+  flex-wrap: wrap;
+  gap: 4px;
   justify-content: space-between;
-  padding: 0 12px;
+  padding: 4px 12px;
   background: inherit;
   border-bottom: 1px solid var(--border-light);
 }
 
+.app-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.left-controls {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.right-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .app-container.dark .app-header {
   border-bottom: 1px solid var(--border-dark);
+}
+
+/* On narrow screens, controls row wraps below title+status */
+@media (max-width: 768px) {
+  .app-title {
+    font-size: 1rem;
+  }
+
+  .right-controls {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .app-header .button {
+    height: 26px;
+    line-height: 26px;
+    padding: 0 7px;
+    font-size: 0.82rem;
+  }
+
+  .app-header .button svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  /* Hide text labels, keep only icons on mobile */
+  .app-header .button .btn-label {
+    display: none;
+  }
+
+  /* Compact the model select */
+  .app-header select.button {
+    max-width: 90px;
+  }
 }
 
 /* =========================================================
@@ -286,11 +371,11 @@ body {
    Wrapper (main layout)
    ========================================================= */
 .wrapper {
-  height: calc(100vh - var(--header-height));
+  flex: 1 1 0;
+  min-height: 0;
   display: grid;
   gap: var(--gap);
   padding: var(--gap);
-  min-height: 0;
 }
 
 /* Wide: 4 columns (CardList wide, 3 EditFields) */
