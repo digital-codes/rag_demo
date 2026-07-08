@@ -16,6 +16,10 @@
       </div>
     </div>
 
+    <div v-if="hint" class="tab-hint" aria-live="polite">
+      <span class="tab-hint-text">{{ hint }}</span>
+    </div>
+
     <nav class="tab-bar">
       <button
         v-for="tab in tabs"
@@ -33,6 +37,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
+defineProps<{
+  hint?: string
+}>();
 
 const activeTab = ref<string>('prompt');
 

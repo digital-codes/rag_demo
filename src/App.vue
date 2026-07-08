@@ -16,10 +16,14 @@
           <font-awesome-icon :icon="['fas', 'question']"/>
             <span class="tooltiptext">Info</span>
         </button>
-        <button class="button loginBtn tooltip" @click="openLogin">
-          <font-awesome-icon v-if="loggedIn" :icon="['fas', 'check']" class="tick"/>
-          Login
+        <button v-if="!loggedIn" class="button loginBtn tooltip" @click="openLogin">
+          <font-awesome-icon :icon="['fas', 'right-to-bracket']"/>
+          <span class="btn-label">Login</span>
           <span class="tooltiptext">Anmelden</span>
+        </button>
+        <button v-else class="button loginBtn tooltip" @click="openLogin" title="Abmelden">
+          <font-awesome-icon :icon="['fas', 'check']" class="tick"/>
+          <span class="tooltiptext">Abmelden</span>
         </button>
         <button @click="openVideo" class="button tooltip">
           <font-awesome-icon :icon="['fas', 'video']" />
@@ -53,8 +57,9 @@
         </button>
         -->
         <button @click="download" class="button tooltip">
+          <font-awesome-icon :icon="['fas', 'download']" />
+          <span class="btn-label">Download</span>
           <span class="tooltiptext">Download</span>
-          Download
         </button>
         <button class="button tooltip" @click="toggleLayout">
           <font-awesome-icon :icon="['fas', useTabLayout ? 'display' : 'mobile-screen']" />
@@ -86,7 +91,7 @@
     </div>
 
     <!-- Mobile Tab Layout -->
-    <TabLayout v-else>
+    <TabLayout v-else :hint="mobileHint">
       <template #prompt>
         <CardList ref="cardListRef" title="Prompt" />
       </template>
@@ -113,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 //import { watch } from "vue";
 import CardList from "./components/CardList.vue";
 import EditField from "./components/EditField.vue";
@@ -164,6 +169,14 @@ const classifier = ref<string | null>(null);
 const fullContext = ref<Array<Record<string, string>>>([]);
 
 const response = ref("");
+
+const mobileHint = computed(() => {
+  if (loading.value) return '';
+  if (query.value.trim() && !context.value) return 'Suche drücken für Kontext';
+  if (context.value && !response.value) return 'Kontext anschauen → Absenden';
+  if (response.value) return 'Antwort anschauen · Umformulieren?';
+  return '';
+});
 
 const loading = ref(false);
 const statusText = ref("Gelangweilt");
