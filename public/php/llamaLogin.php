@@ -29,6 +29,9 @@ use Lcobucci\Clock\SystemClock;
 
 require 'vendor/autoload.php';
 
+// jwt check
+require_once 'llamaCheckToken.php'; 
+
 $basedirFile = __DIR__ . '/basedir.txt';
 $basedir = '/var/www/files/';
 
@@ -114,59 +117,9 @@ function extractUsernameAndPassword() {
     return array('username' => $username, 'password' => $password);
   }
 
-function parseToken($token) {
-  checkToken($token);
-  $parser = new Parser(new JoseEncoder());
-
-  try {
-      $tok = $parser->parse($token);
-  } catch (CannotDecodeContent | InvalidTokenStructure | UnsupportedHeaderFound $e) {
-      http_response_code(401);
-      echo json_encode(array("error" => "Invalid username or password"));
-      die();
-  }
-  assert($tok instanceof UnencryptedToken);
-  // check jti claim
-  $jti = getJtiClaim();
-  if ($tok->claims()->get('jti') !== $jti) {
-      http_response_code(401);
-      echo json_encode(array("error" => "Invalid username or password (JTI)"));
-      die();
-  }
-
-  $user = $tok->claims()->get('uid'); 
-  //echo("User: " . $user . PHP_EOL);
-  return $user;
-  
-}
-
-function checkToken($token,$publicKey) {
-  $parser = new Parser(new JoseEncoder());
-  $tok = $parser->parse($token);
-
-  // Create a key object from the public key
-  $check = InMemory::plainText($publicKey);
-
-  // Verify the signature using the SHA-256 algorithm and the public key
-  $validator = new Validator();
-  $algorithm    = new Sha256();
-
-  if (! $validator->validate($tok,  new SignedWith($algorithm,$check))) {
-      http_response_code(401);
-      echo json_encode(array("error" => "Invalid username or password"));
-      die();
-  }
-
-  $clock = new SystemClock(new DateTimeZone(date_default_timezone_get()));
-  if (! $validator->validate($tok, new LooseValidAt($clock))) {
-      http_response_code(401);
-      echo json_encode(array("error" => "Invalid username or password"));
-      die();
-  }
-}
 
 // https://lcobucci-jwt.readthedocs.io/en/4.3.0/issuing-tokens/  
-function makeToken($username) {
+function makeToken($username,$provider = 'local') {
   global $public_file, $private_file;
 
   //echo("Files: " . $public_file . PHP_EOL);
@@ -196,6 +149,8 @@ function makeToken($username) {
       ->expiresAt($now->modify('+1 hour'))
       // Configures a new claim, called "uid"
       ->withClaim('uid', $username)
+      // Configures a new claim, called "provider"
+      ->withClaim('provider', $provider)
       // Configures a new header, called "foo"
       //->withHeader('foo', 'bar')
       // Builds a new token
@@ -242,7 +197,8 @@ function login() {
         // true if OK
         if ($data[0] === $username && password_verify($password, $data[1])) {
         //  if ($data[0] === $username && ($password === $data[1])) {
-            $token = makeToken($username); //JWT::encode($payload, $secret_key);
+            $provider = isset($data[3]) ? $data[3] : "local";
+            $token = makeToken($username, $provider); //JWT::encode($payload, $secret_key);
             $publicKey = file_get_contents($public_file);
             checkToken($token,$publicKey); // throws on error here 
             echo json_encode(array("token" => $token,"key" => $publicKey));

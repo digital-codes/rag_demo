@@ -97,7 +97,9 @@ if (!$authHeader) {
 $token = str_replace('Bearer ', '', $authHeader);
 
 try {
-    $user = parseToken($token, $isLocal);
+    $claims = parseToken($token, $isLocal);
+    $user = $claims['user'];
+    $provider = $claims['provider'];
     if (!$user) {
         http_response_code(401);
         exit('Unauthorized (invalid token)');
@@ -155,12 +157,12 @@ if (isset($data['context'])) {
 }   
 
 // use local llm if user == "any"
-if ($user === "any") {
+if ($user === "any" || $provider === "local") {
     $configLlm = parse_ini_file($iniPath, true)['LOCAL'] ?? null;
-    logError("Local LLM requested due to user ANY", $logFile);
+    logError("Local LLM requested due to user ANY or local provider", $logFile);
     $useLock = true;
 } else {
-    logError("User is $user, using remote llm", $logFile);
+    logError("User is $user, using remote llm on provider $provider", $logFile);
     $configLlm = parse_ini_file($iniPath, true)['REMOTE'] ?? null;
     $useLock = false;
 }

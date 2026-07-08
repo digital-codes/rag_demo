@@ -13,8 +13,9 @@ $token = $argv[1];
 $local = isset($argv[2]) ? filter_var($argv[2], FILTER_VALIDATE_BOOLEAN) : false;
 
 try {
-    $user = parseToken($token, $local);
-    echo "User ID: " . $user . PHP_EOL;
+    $claims = parseToken($token);
+    echo "User ID: " . $claims['user'] . PHP_EOL;
+    echo "Provider: " . $claims['provider'] . PHP_EOL;
     exit(0); // success
 } catch (Exception $e) {
     // your function already sets http_response_code() + die(), 

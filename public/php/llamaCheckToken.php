@@ -74,9 +74,9 @@ function getConfig($local = false)
 
 
 function parseToken($token, $local = false)
-{
-    list($publicKey, $jti_claim) = getConfig($local);
-    if (!checkToken($token, $publicKey, $jti_claim)) { 
+    {
+    list($publicKey) = getConfig($local);
+    if (!checkToken($token, $publicKey)) { 
         return null;
     }
     $parser = new Parser(new JoseEncoder());
@@ -89,11 +89,12 @@ function parseToken($token, $local = false)
     }
     assert($tok instanceof UnencryptedToken);
     $user = $tok->claims()->get('uid');
+    $provider = $tok->claims()->get('provider');
     //echo("User: " . $user . PHP_EOL);
-    return $user;
+    return ['user' => $user, 'provider' => $provider];
 }
 
-function checkToken($token, $publicKey, $jti_claim)
+function checkToken($token, $publicKey)
 {
     $parser = new Parser(new JoseEncoder());
     $tok = $parser->parse($token);

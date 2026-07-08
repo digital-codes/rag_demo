@@ -91,7 +91,7 @@
     </div>
 
     <!-- Mobile Tab Layout -->
-    <TabLayout v-else :hint="mobileHint">
+    <TabLayout v-else :hint="mobileHint" @update:activeTab="tabTo($event)">
       <template #prompt>
         <CardList ref="cardListRef" title="Prompt" />
       </template>
@@ -177,6 +177,38 @@ const mobileHint = computed(() => {
   if (response.value) return 'Antwort anschauen · Umformulieren?';
   return '';
 });
+
+const activeTab = ref("prompt");
+const tabTo = (tabId: string) => {
+  if (!['prompt', 'question', 'context', 'answer'].includes(tabId)) {
+    console.warn("Invalid tab id:", tabId);
+    return;
+  }
+  if (activeTab.value === tabId) {
+    return;
+  }
+  console.log("Active tab changed to:", tabId)
+  activeTab.value = tabId;
+
+  switch (tabId) {
+    case 'prompt':
+      const promptField = cardListRef.value?.getCombinedText().trim();
+      console.log("Prompt field content:", promptField);
+      break;
+    case 'question':
+      const queryField = query.value.trim();
+      console.log("Query field content:", queryField);
+      break;
+    case 'context':
+      const contextField = context.value.trim();
+      console.log("Context field content:", contextField);
+      break;
+    case 'answer':
+      const responseField = response.value.trim();
+      console.log("Response field content:", responseField);
+      break;
+  }
+};
 
 const loading = ref(false);
 const statusText = ref("Gelangweilt");

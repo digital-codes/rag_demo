@@ -25,7 +25,7 @@
         v-for="tab in tabs"
         :key="tab.id"
         :class="['tab-btn', { active: activeTab === tab.id }]"
-        @click="activeTab = tab.id"
+        @click="activeTab = tab.id; emit('update:activeTab', tab.id)"
         :aria-label="tab.label"
       >
         <font-awesome-icon :icon="['fas', tab.icon]" />
@@ -40,6 +40,10 @@ import { ref } from 'vue';
 
 defineProps<{
   hint?: string
+}>();
+
+const emit = defineEmits<{
+  (e: 'update:activeTab', value: string): void
 }>();
 
 const activeTab = ref<string>('prompt');
