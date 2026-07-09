@@ -608,10 +608,38 @@ const getWeather = async () => {
   return undefined;
 }
 
+// QR-code demo login: reads `username` and `pwd` from the URL query string.
+// Note: passing credentials in URLs is intentional for QR-code based demo access
+// and is accepted as a trade-off for ease of use in controlled demo environments.
+async function checkUrlParamsLogin() {
+  const params = new URLSearchParams(window.location.search)
+  const username = params.get('username')
+  const pwd = params.get('pwd')
+  if (username && pwd) {
+    try {
+      const res = await fetch('php/llamaLogin.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password: pwd }),
+      })
+      if (!res.ok) throw new Error(`Login failed (${res.status})`)
+      const data = await res.json()
+      if (data.token) {
+        localStorage.setItem('auth-token', data.token)
+        loggedIn.value = true
+      }
+    } catch (err: any) {
+      console.warn('URL param login failed:', err)
+    }
+  }
+}
+
 onMounted(() => {
   mobileQuery.addEventListener('change', onMobileQueryChange);
   // remove orphan token
   localStorage.removeItem("auth-token")
+  // Check URL params for QR-code based login (username + pwd)
+  checkUrlParamsLogin()
   // Check saved preference
   const saved = localStorage.getItem("app-theme");
   if (saved === "light" || saved === "dark") {
