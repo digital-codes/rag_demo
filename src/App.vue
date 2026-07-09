@@ -91,21 +91,23 @@
     </div>
 
     <!-- Mobile Tab Layout -->
-    <TabLayout v-else :hint="mobileHint" @update:activeTab="tabTo($event)">
+    <TabLayout v-else :hint="mobileHint" :tabs="mobileTabs" @update:activeTab="tabTo($event)">
       <template #prompt>
         <CardList ref="cardListRef" title="Prompt" />
       </template>
-      <template #question>
-        <EditField title="Frage" v-model:fieldContent="query" :disabled="false" ref="queryFieldRef"
-          button="Suche" @button-click="ctxSearch" :comments="queryComments" tooltip="Was wissen wir?" />
+      <template #qa>
+        <QAPane
+          :query="query"
+          @update:query="query = $event"
+          :queryComments="queryComments"
+          :response="response"
+          :loading="loading"
+          @search="ctxSearchAndSubmit"
+        />
       </template>
       <template #context>
         <EditField title="Kontext" v-model:fieldContent="context" :disabled="false" button="Löschen"
           @button-click="ctxClear" />
-      </template>
-      <template #answer>
-        <EditField title="Antwort" v-model:fieldContent="response" :disabled="true"
-          button="Absenden" @button-click="submit" tooltip="KI befragen" />
       </template>
     </TabLayout>
   </div>
@@ -123,6 +125,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import CardList from "./components/CardList.vue";
 import EditField from "./components/EditField.vue";
 import TabLayout from "./components/TabLayout.vue";
+import QAPane from "./components/QAPane.vue";
 import LoginPopup from "./components/LoginPop.vue";
 import VideoPopup from "./components/VideoPop.vue";
 import InfoPopup from "./components/InfoPop.vue";
@@ -172,15 +175,22 @@ const response = ref("");
 
 const mobileHint = computed(() => {
   if (loading.value) return '';
-  if (query.value.trim() && !context.value) return 'Suche drücken für Kontext';
-  if (context.value && !response.value) return 'Kontext anschauen → Absenden';
-  if (response.value) return 'Antwort anschauen · Umformulieren?';
+  if (!query.value.trim()) return 'Frage eingeben und Suche drücken';
+  if (!context.value) return 'Suche drücken für Kontext';
+  if (response.value) return 'Antwort erhalten · Umformulieren?';
   return '';
 });
 
+const mobileTabs = [
+  { id: 'prompt',  label: 'Prompt',  icon: 'list'      },
+  { id: 'qa',      label: 'Q&A',     icon: 'comments'  },
+  { id: 'context', label: 'Kontext', icon: 'book-open' },
+];
+
 const activeTab = ref("prompt");
 const tabTo = (tabId: string) => {
-  if (!['prompt', 'question', 'context', 'answer'].includes(tabId)) {
+  // 'question' and 'answer' are kept for backward compat with the desktop layout's tabTo calls
+  if (!['prompt', 'qa', 'context', 'question', 'answer'].includes(tabId)) {
     console.warn("Invalid tab id:", tabId);
     return;
   }
@@ -191,22 +201,27 @@ const tabTo = (tabId: string) => {
   activeTab.value = tabId;
 
   switch (tabId) {
-    case 'prompt':
+    case 'prompt': {
       const promptField = cardListRef.value?.getCombinedText().trim();
       console.log("Prompt field content:", promptField);
       break;
-    case 'question':
+    }
+    case 'qa':
+    case 'question': {
       const queryField = query.value.trim();
       console.log("Query field content:", queryField);
       break;
-    case 'context':
+    }
+    case 'context': {
       const contextField = context.value.trim();
       console.log("Context field content:", contextField);
       break;
-    case 'answer':
+    }
+    case 'answer': {
       const responseField = response.value.trim();
       console.log("Response field content:", responseField);
       break;
+    }
   }
 };
 
@@ -517,6 +532,18 @@ const ctxSearch = async () => {
     }
     loading.value = false;
     response.value = "";
+  }
+};
+
+/**
+ * Chained search+submit for the mobile Q&A tab:
+ * 1. Runs context search (classifier → context matching).
+ * 2. If context was found, immediately calls submit() without user interaction.
+ */
+const ctxSearchAndSubmit = async () => {
+  await ctxSearch();
+  if (context.value && context.value.trim().length > 0) {
+    await submit();
   }
 };
 
