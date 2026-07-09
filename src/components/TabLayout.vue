@@ -8,6 +8,9 @@
       <div v-show="activeTab === 'question'" class="tab-panel">
         <slot name="question" />
       </div>
+      <div v-show="activeTab === 'qa'" class="tab-panel">
+        <slot name="qa" />
+      </div>
       <div v-show="activeTab === 'context'" class="tab-panel">
         <slot name="context" />
       </div>
@@ -22,7 +25,7 @@
 
     <nav class="tab-bar">
       <button
-        v-for="tab in tabs"
+        v-for="tab in resolvedTabs"
         :key="tab.id"
         :class="['tab-btn', { active: activeTab === tab.id }]"
         @click="activeTab = tab.id; emit('update:activeTab', tab.id)"
@@ -36,10 +39,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
-defineProps<{
-  hint?: string
+interface TabDef {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+const props = defineProps<{
+  hint?: string;
+  tabs?: TabDef[];
 }>();
 
 const emit = defineEmits<{
@@ -48,10 +58,12 @@ const emit = defineEmits<{
 
 const activeTab = ref<string>('prompt');
 
-const tabs = [
+const defaultTabs: TabDef[] = [
   { id: 'prompt',   label: 'Prompt',  icon: 'list'             },
   { id: 'question', label: 'Frage',   icon: 'magnifying-glass' },
   { id: 'context',  label: 'Kontext', icon: 'book-open'        },
   { id: 'answer',   label: 'Antwort', icon: 'comment-dots'     },
 ];
+
+const resolvedTabs = computed<TabDef[]>(() => props.tabs ?? defaultTabs);
 </script>
