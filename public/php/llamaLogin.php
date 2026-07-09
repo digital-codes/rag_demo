@@ -119,7 +119,7 @@ function extractUsernameAndPassword() {
 
 
 // https://lcobucci-jwt.readthedocs.io/en/4.3.0/issuing-tokens/  
-function makeToken($username,$provider = 'local') {
+function makeToken($username, $provider = 'local', $durationMinutes = 60) {
   global $public_file, $private_file;
 
   //echo("Files: " . $public_file . PHP_EOL);
@@ -146,7 +146,7 @@ function makeToken($username,$provider = 'local') {
       // Configures the time that the token can be used (nbf claim)
       ->canOnlyBeUsedAfter($now->modify('-1 hour'))  // client should use UTC but not guaranteed
       // Configures the expiration time of the token (exp claim)
-      ->expiresAt($now->modify('+1 hour'))
+      ->expiresAt($now->modify("+{$durationMinutes} minutes"))
       // Configures a new claim, called "uid"
       ->withClaim('uid', $username)
       // Configures a new claim, called "provider"
@@ -198,7 +198,14 @@ function login() {
         if ($data[0] === $username && password_verify($password, $data[1])) {
         //  if ($data[0] === $username && ($password === $data[1])) {
             $provider = isset($data[3]) ? $data[3] : "local";
-            $token = makeToken($username, $provider); //JWT::encode($payload, $secret_key);
+            $durationMinutes = 60; // default 1 hour
+            if (isset($data[4]) && $data[4] !== null && $data[4] !== '') {
+              $parsed = (int)$data[4];
+              if ($parsed > 0 && $parsed <= 1440) { // cap at 24 hours
+                $durationMinutes = $parsed;
+              }
+            }
+            $token = makeToken($username, $provider, $durationMinutes); //JWT::encode($payload, $secret_key);
             $publicKey = file_get_contents($public_file);
             checkToken($token,$publicKey); // throws on error here 
             echo json_encode(array("token" => $token,"key" => $publicKey));
