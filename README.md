@@ -27,6 +27,17 @@ Enable testing of fundamental RAG functions
 
 Model usage might involve access to remote LLM service, therefore **Login** to the backend is required (see *backend*)
 
+## Recent updates
+
+### QR-code login (demo mode)
+
+The app now supports QR-code based auto-login by reading `username` and `pwd` (password) from URL query parameters.
+`pwd` is the exact parameter name expected by `php/llamaLogin.php`.
+
+On startup, the app checks these parameters and automatically requests a token from `php/llamaLogin.php`.
+
+⚠️ **Demo-only feature**: Do not use this login method in production. Credentials in URLs can be exposed by browser history, server logs, reverse proxies, and shared links.
+
 Download option for all text fields: click **Download**
 
 
@@ -103,4 +114,3 @@ npm install
 npm run dev => local development 
 
 npm run build => build deployable version
-
