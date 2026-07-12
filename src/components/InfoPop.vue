@@ -17,13 +17,14 @@ const props = defineProps<{
   activeTab: string
 }>()
 
-const desktopInfoSrc = '/data/info_desktop.md'
+const base = import.meta.env.BASE_URL
+const desktopInfoSrc = `${base}data/info_desktop.md`
 const mobileInfoSources = {
-  fallback: '/data/info_mobile.md',
+  fallback: `${base}data/info_mobile.md`,
   tabs: {
-    prompt: '/data/info_mobile_prompt.md',
-    qa: '/data/info_mobile_qa.md',
-    context: '/data/info_mobile_context.md',
+    prompt: `${base}data/info_mobile_prompt.md`,
+    qa: `${base}data/info_mobile_qa.md`,
+    context: `${base}data/info_mobile_context.md`,
   } as Record<string, string>,
 }
 
