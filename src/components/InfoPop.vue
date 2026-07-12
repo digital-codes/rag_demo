@@ -18,26 +18,40 @@ const props = defineProps<{
 }>()
 
 const desktopInfoSrc = '/data/info_desktop.md'
-const mobileFallbackSrc = '/data/info_mobile.md'
-
-const mobileTabInfoMap: Record<string, string> = {
-  prompt: '/data/info_mobile_prompt.md',
-  qa: '/data/info_mobile_qa.md',
-  context: '/data/info_mobile_context.md',
+const mobileInfoSources = {
+  fallback: '/data/info_mobile.md',
+  tabs: {
+    prompt: '/data/info_mobile_prompt.md',
+    qa: '/data/info_mobile_qa.md',
+    context: '/data/info_mobile_context.md',
+  } as Record<string, string>,
 }
 
 function resolveInfoSrc(): string {
   if (!props.useTabLayout) {
     return desktopInfoSrc
   }
-  return mobileTabInfoMap[props.activeTab] ?? mobileFallbackSrc
+  const src = mobileInfoSources.tabs[props.activeTab]
+  if (!src) {
+    console.warn(`Unknown mobile tab for info popup: ${props.activeTab}. Expected one of: ${Object.keys(mobileInfoSources.tabs).join(', ')}.`)
+    return mobileInfoSources.fallback
+  }
+  return src
 }
 
 onMounted(async () => {
-  const src = resolveInfoSrc()
-  const res = await fetch(src)
-  const markdown = await res.text()
-  html.value = await marked(markdown)
+  try {
+    const src = resolveInfoSrc()
+    const res = await fetch(src)
+    if (!res.ok) {
+      throw new Error(`Failed to load info file: ${src} (${res.status})`)
+    }
+    const markdown = await res.text()
+    html.value = await marked(markdown)
+  } catch (error) {
+    console.error(error)
+    html.value = '<p>Die Hilfe konnte gerade nicht geladen werden.</p>'
+  }
 })
 
 const emit = defineEmits<{
