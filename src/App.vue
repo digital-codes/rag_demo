@@ -115,7 +115,12 @@
   <!-- Login popup -->
   <LoginPopup v-if="showLogin" @success="handleLoginSuccess" @close="showLogin = false" />
   <VideoPopup v-if="showVideo" :src="videoSrc" @close="showVideo = false" />
-  <InfoPopup v-if="showInfo" @close="showInfo = false" />
+  <InfoPopup
+    v-if="showInfo"
+    :use-tab-layout="useTabLayout"
+    :active-tab="activeTab"
+    @close="showInfo = false"
+  />
 
 </template>
 
