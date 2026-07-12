@@ -48,6 +48,15 @@ onMounted(async () => {
     }
     const markdown = await res.text()
     html.value = await marked(markdown)
+    // Add target="_blank" to all links
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html.value, 'text/html')
+    doc.querySelectorAll('a').forEach(link => {
+      link.setAttribute('target', '_blank')
+      link.setAttribute('rel', 'noopener noreferrer')
+    })
+    html.value = doc.body.innerHTML
+
   } catch (error) {
     console.error(error)
     html.value = '<p>Die Hilfe konnte gerade nicht geladen werden.</p>'
@@ -91,6 +100,7 @@ function close() {
   overflow: hidden;
 }
 
+
 .infoContent {
   width: 100%;
   height: 95%;
@@ -103,6 +113,7 @@ function close() {
   padding: 1rem;
   box-sizing: border-box;
 }
+
 
 /* Close button */
 .close {
@@ -124,5 +135,12 @@ function close() {
 }
 .close:hover {
   background: rgba(0,0,0,0.75);
+}
+</style>
+
+<style>
+.infoContent a {
+  text-decoration: none;
+  color: var(--text-accent-dark);
 }
 </style>
