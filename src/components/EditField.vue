@@ -44,7 +44,7 @@ const props = withDefaults(defineProps<{
     tooltip: '',
     comments: null
 });
-const placeHolder = computed(() => fieldContent.value == "" ? (disabled? '':'Write something…') : fieldContent.value);
+const placeHolder = computed(() => fieldContent.value == "" ? (disabled? '':'Schreib etwas…') : fieldContent.value);
 
 defineEmits<{
   (e: 'button-click'): void,  // no payload, just the event

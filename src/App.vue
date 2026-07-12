@@ -183,7 +183,7 @@ const mobileHint = computed(() => {
 
 const mobileTabs = [
   { id: 'prompt',  label: 'Prompt',  icon: 'list'      },
-  { id: 'qa',      label: 'Q&A',     icon: 'comments'  },
+  { id: 'qa',      label: 'Q&A',     icon: 'lightbulb'  },
   { id: 'context', label: 'Kontext', icon: 'book-open' },
 ];
 
@@ -503,7 +503,7 @@ const ctxSearch = async () => {
       context.value = "";
       loading.value = false;
       statusText.value = "Nichts gefunden";
-      queryComments.value = null
+      queryComments.value = "Kein Kontext gefunden"
       response.value = "";
       return;
     }

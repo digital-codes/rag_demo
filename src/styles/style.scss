@@ -33,7 +33,16 @@
   --tab-bar-height: 56px;
   --tab-hint-height: 26px;
   --gap: 8px;
+
+  --qna-hint-bg-light: #ddd;
+  --qna-hint-bg-dark: #333;
+  --qna-hint-color-light: #333;
+  --qna-hint-color-dark: #ddd;
+  --qna-hint-border-light: 1px solid var(--qna-hint-color-light);
+  --qna-hint-border-dark: 1px solid var(--qna-hint-color-dark);
+
 }
+
 
 /* =========================================================
    Tab Layout (mobile / compact)
@@ -152,6 +161,19 @@
   line-height: 1;
   white-space: nowrap;
 }
+
+.qa-divider {
+  border-top: 1px solid var(--qna-hint-border-light);
+  background: var(--qna-hint-bg-light);
+  color: var(--qna-hint-color-light);
+}
+
+.qa-divider.dark {
+  border-top: 1px solid var(--qna-hint-border-dark);
+  background: var(--qna-hint-bg-dark);
+  color: var(--qna-hint-color-dark);
+}
+
 
 /* =========================================================
    Base

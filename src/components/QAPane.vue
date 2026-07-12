@@ -13,7 +13,7 @@
       <textarea
         class="editTextarea"
         v-model="queryModel"
-        placeholder="Write something…"
+        placeholder="Frag etwas…"
         :disabled="loading"
       ></textarea>
     </div>
@@ -79,17 +79,13 @@ const queryModel = computed({
   flex-shrink: 0;
   padding: 4px 8px;
   font-size: 0.8rem;
-  background: var(--hint-bg, rgba(100, 108, 255, 0.08));
-  color: var(--hint-color, #646cff);
-  border-top: 1px solid var(--hint-border, rgba(100, 108, 255, 0.2));
-  border-bottom: 1px solid var(--hint-border, rgba(100, 108, 255, 0.2));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .qa-divider-placeholder {
-  opacity: 0.45;
+  opacity: 0.85;
 }
 
 .qa-bottom {
