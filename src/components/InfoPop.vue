@@ -3,7 +3,6 @@
     <div class="modal" @click.stop>
       <button class="close" @click="close" aria-label="Close">✕</button>
       <div class="infoContent" v-html="html"></div>
-      <p><a :href="repo" target="_blank" rel="noopener noreferrer">Quellcode</a></p>
     </div>
   </div>  
 </template>
@@ -13,19 +12,32 @@ import { ref, onMounted } from 'vue'
 import { marked } from 'marked'
 
 const html = ref<string>('')
+const props = defineProps<{
+  useTabLayout: boolean
+  activeTab: string
+}>()
 
-const src = 'https://raw.githubusercontent.com/digital-codes/rag_demo/main/README.md'
-const repo = "https://github.com/digital-codes/rag_demo/"
+const desktopInfoSrc = '/data/info_desktop.md'
+const mobileFallbackSrc = '/data/info_mobile.md'
+
+const mobileTabInfoMap: Record<string, string> = {
+  prompt: '/data/info_mobile_prompt.md',
+  qa: '/data/info_mobile_qa.md',
+  context: '/data/info_mobile_context.md',
+}
+
+function resolveInfoSrc(): string {
+  if (!props.useTabLayout) {
+    return desktopInfoSrc
+  }
+  return mobileTabInfoMap[props.activeTab] ?? mobileFallbackSrc
+}
 
 onMounted(async () => {
-  console.log("Loading README.md")
-  const res = await fetch(
-    src
-  )
+  const src = resolveInfoSrc()
+  const res = await fetch(src)
   const markdown = await res.text()
-  console.log("Converting markdown to HTML",markdown)
   html.value = await marked(markdown)
-  console.log("HTML content set",html.value)
 })
 
 const emit = defineEmits<{
