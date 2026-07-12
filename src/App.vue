@@ -546,6 +546,11 @@ const ctxSearch = async () => {
  * 2. If context was found, immediately calls submit() without user interaction.
  */
 const ctxSearchAndSubmit = async () => {
+  // if context is already present and more than "nichts", skip search and just submit
+  if (context.value && !context.value.trim().toLowerCase().startsWith("nichts")) {
+    await submit();
+    return;
+  }
   await ctxSearch();
   if (context.value && context.value.trim().length > 0) {
     await submit();
