@@ -78,6 +78,7 @@ const condition = ref<ListItemData | null>(null);
 
 // actual values loaded in onmounted
 const itemPresets = ref<Record<string, string[]> | null>(null);
+const itemBrief = ref<Record<string, string[]> | null>(null);
 
 const conditionPresets: Record<string, string> = {
   'Normal':"Das Wetter ist völlig normal für die Jahreszeit",
@@ -146,6 +147,7 @@ function getCombinedText(): string {
 
 onMounted(async () => {
   try {
+    // load main prompts and personalities from JSON file
     const response = await fetch('data/prompts.json');
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const prompts = await response.json();
@@ -153,13 +155,23 @@ onMounted(async () => {
     itemPresets.value = Object.fromEntries(
       Object.entries(prompts || {}).map(([key, val]) => [
       key,
-      (typeof val === 'string' ? val : String(val))
+      (typeof val.full === 'string' ? val.full : String(val.full))
         .split(/\r?\n/)
         .map(line => line.trim())
         .filter(line => line.length > 0)
       ])
     );
     console.log("Loaded item presets:", itemPresets.value);
+    itemBrief.value = Object.fromEntries(
+      Object.entries(prompts || {}).map(([key, val]) => [
+      key,
+      (typeof val.brief === 'string' ? val.brief : String(val.brief))
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+      ])
+    );
+    console.log("Loaded item brief:", itemBrief.value);
   } catch (error) {
     console.error("Failed to load item presets:", error);
     itemPresets.value = {}; // fallback to empty

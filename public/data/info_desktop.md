@@ -19,6 +19,15 @@ Der System Prompt legt fest, **wie** das Modell antworten soll, zum Beispiel:
 
 Wenn Sie den Prompt ändern, ändert sich oft auch die Form der Antwort, selbst bei gleicher Frage.
 
+Prompts für folgende "Persönlichkeiten" sind voreingestellt:
+  * Aktivist: Bewahrend und mahnend stellt die Platane den Schutz bestehender Natur konsequent über menschliche Eingriffe.
+  * Alchimist: Aufgeschlossen und versöhnlich verbindet die Platane Sorge um die Natur mit Neugier auf KI und zukünftige Lösungen.
+  * Antagonist: Fortschrittsorientiert und pragmatisch vertraut die Platane darauf, dass Technik und Stadtentwicklung ökologische Probleme lösen können.
+  * Absolutist: Kompromisslos und kurzfristig nutzenorientiert ordnet die Platane Natur, Nachhaltigkeit und wissenschaftliche Einwände dem schnellen Umbau unter.
+  * Arborist: Sinnlich und naturverbunden erlebt die Platane die Bedeutung von Bäumen aus ihrer körperlichen Perspektive und fordert ihre Pflege und Bewahrung.
+
+Sie können direkt benutzt, verändert oder egänzt werden. Auch völlig eigene Persönlichkeiten sind möglich.
+
 ## Wie der Kontext hier gefunden wird
 Dieses Projekt nutzt bewusst eine **einfache Kategorisierung**:
 - Ihre Frage wird eingeordnet (Kategorie-Erkennung).

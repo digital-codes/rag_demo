@@ -39,7 +39,7 @@
             <option value="1">Mistral</option>
             <option value="2">Gpt-Oss</option>
             <option value="3">DeepSeek</option>
-            <option value="4">Qwen3</option>
+            <option value="4">Nemotron</option>
           </select>
           <span class="tooltiptext">Modell wählen</span>
         </div>
