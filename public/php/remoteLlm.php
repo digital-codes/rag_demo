@@ -24,6 +24,7 @@ function remoteQuery($key, $model, $url, $prompt, $query, $temperature = 0.5, $s
     if (stripos($url, 'deepinfra') !== false) {
         $body['temperature'] = $temperature;
         $body['seed'] = $seed;
+        $body['random_seed'] = $seed;
     }
     # no streaming fo rollama 
     if (stripos($url, 'ollama') !== false) {
@@ -54,11 +55,23 @@ function remoteQuery($key, $model, $url, $prompt, $query, $temperature = 0.5, $s
             $reply = $result['message']['content'] ?? "No reply.";
         } else {
             $reply = $result['choices'][0]['message']['content'] ?? "No reply.";
+            $impact = $result['impact'] ?? null;
+            if ($impact) {
+                $energy = $impact['energy'] ?? null;
+                $co2 = $impact['emissions'] ?? null;
+                if ($energy !== null && $co2 !== null) {
+                    $impact = [
+                        'energy' => $energy["total"] . " " . $energy["unit"],
+                        'co2' => $co2["total"] . " " . $co2["unit"]
+                    ];
+                }
+            }
         }
         $result = [
             'status' => 'ok',
             'reply' => $reply,
-            'messages' => $messages
+            'messages' => $messages,
+            'impact' => $impact ?? null
         ];
     } else {
         $result = [

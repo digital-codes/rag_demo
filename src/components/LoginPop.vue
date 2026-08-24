@@ -8,13 +8,14 @@
         class="codeInput"
         placeholder="Namen"
       />
+      <!-- make sure submit action executed when enter key is pressed -->
       <input 
         type="password"
         v-model="code"
         class="codeInput"
         placeholder="Passwort"
+        @keyup.enter="onSubmit"
       />
-
       <div class="modal-actions">
         <button class="button" @click="onSubmit">Absenden</button>
         <button class="button" @click="$emit('close')">Abbrechen</button>

@@ -173,6 +173,7 @@ const queryComments = ref<string | null>(null)
 const context = ref("Nichts ...");
 
 const classifier = ref<string | null>(null);
+const rating = ref<string | null>(null);
 
 const fullContext = ref<Array<Record<string, string>>>([]);
 
@@ -319,7 +320,7 @@ const normalizeText = (input: string): string => {
 
 
 
-const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperature: number, seed: number, model: number = 1) => {
+const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperature: number, seed: number, model: number = 1, signed:boolean = true) => {
   // Placeholder for LLM call logic
   const token = localStorage.getItem("auth-token");
   if (!token) {
@@ -394,7 +395,23 @@ const llmCall = async (p: string, ctx: string, cnd: string, q: string, temperatu
       return null
     } else {
       console.log("Submit success:", body);
-      return String(body.text);
+      // try to get model and provider from body, if present. also try to get impact info if present
+      let author = ""
+      if (body.model) {
+        console.log("Model:", body.model);
+        author = body.model
+      }
+      if (body.provider) {
+        console.log("Provider:", body.provider);
+        author += (author ? " / " : "") + body.provider
+      }
+      if (body.impact) {
+        console.log("Impact:", body.impact);
+        author += (author ? " / " : "") + `Impact: ${body.impact}`
+      }
+      const signedText = signed ? body.text + "\n\n" + (author ? " (" + author + ")" : "") : body.text;
+      console.log("Signed text:", signedText);
+      return String(signedText).trim();
     }
   } catch (err: any) {
     console.error("Submit error:", err);
@@ -477,6 +494,20 @@ const submit = async () => {
     statusText.value = "Fertig";
     response.value = r.trim()
     console.log("LLM chat results:", results);
+    // try to get rating for output string. 
+    // make sure to remove trailing "author" signature if present, as the rating prompt is not expecting it.
+    let rawResult = r.trim();
+    const signatureIndex = r.lastIndexOf("\n\n(");
+    if (signatureIndex !== -1) {
+      console.log("Removing signature from output for rating:", r.substring(signatureIndex));
+      rawResult = r.substring(0, signatureIndex).trim();
+    }
+    const ratingResult = await rateOutput(rawResult ?? r.trim());
+    if (ratingResult) {
+      console.log("Rating result:", ratingResult);
+    } else {
+      console.log("No rating result");
+    }
   } else {
     response.value = ""
     statusText.value = "Kein Ergebnis";
@@ -496,7 +527,7 @@ const ctxSearch = async () => {
     // for llm, build the call params
     if (classifier?.value) {
       // always use model 1 for context search
-      const r = await llmCall(classifier?.value, "", "", query.value, 0.0, 42, 1);
+      const r = await llmCall(classifier?.value, "", "", query.value, 0.0, 42, 1, false);
       if (typeof r === "string") {
         classes = r.split(",").map(s => s.trim()).filter(s => s.length > 0);
         console.log("LLM classification results:", classes);
@@ -538,6 +569,29 @@ const ctxSearch = async () => {
     loading.value = false;
     response.value = "";
   }
+};
+
+const rateOutput = async (statement: string) => {
+  console.log("Rating requested. Current query:", statement);
+  if (statement.length === 0) {
+    console.warn("Empty statement for rating. Skipping.");
+    return "undefined";
+  }
+  loading.value = true;
+  let ratingEval: string = "undefined";
+  // for llm, build the call params
+  if (rating?.value) {
+    // always use model 1 for context search
+    const r = await llmCall(rating?.value, "", "", statement, 0.0, 42, 1,false);
+    if (typeof r === "string") {
+      ratingEval = r;
+      console.log("LLM rating results:", ratingEval);
+    } else {
+      console.log("LLM rating returned non-string:", r);
+    }
+  }
+  loading.value = false;
+  return ratingEval;
 };
 
 /**
@@ -695,6 +749,22 @@ onMounted(() => {
       }
     } catch (err) {
       console.warn('Could not load /data/classifier_prompt.json:', err);
+    }
+  })();
+  // load rating promt
+  (async () => {
+    try {
+      const res = await fetch('data/rating_prompt.json', { cache: 'no-cache' });
+      if (!res.ok) throw new Error(`Failed to load rating_prompt.json (${res.status})`);
+      const data = await res.json();
+      if (typeof (data) === 'object') {
+        rating.value = data.prompt;
+        console.log('Loaded rating from /data/rating_prompt.json') //, rating.value);
+      } else {
+        console.warn('Invalid format in /data/rating_prompt.json');
+      }
+    } catch (err) {
+      console.warn('Could not load /data/rating_prompt.json:', err);
     }
   })();
 

@@ -125,6 +125,8 @@ if (!isset($data['prompt'])) {
     exit;
 }
 $systemPrompt = $data['prompt'];
+// add minimal cosmetics
+$systemPrompt = $systemPrompt . PHP_EOL . "Bitte antworte in Deutsch, wenn nicht anders angegeben. Beschränke Deine Antwort auf 350 Worte. Benutze keine Emojis oder Markdown-Formattierung, nur Text." . PHP_EOL;
 
 // more optional params
 if (isset($data['seed'])) {
@@ -164,6 +166,16 @@ if ($user === "any" || $provider === "local") {
 } else {
     logError("User is $user, using remote llm on provider $provider", $logFile);
     $configLlm = parse_ini_file($iniPath, true)['REMOTE'] ?? null;
+    // append _provider to model choice and api key and llurl
+    $configLlm['llmodel'] = $configLlm['llmodel' . "_$provider"] ?? $configLlm['llmodel'];
+    $configLlm['llmodel_1'] = $configLlm['llmodel_1' . "_$provider"] ?? $configLlm['llmodel_1'];
+    $configLlm['llmodel_2'] = $configLlm['llmodel_2' . "_$provider"] ?? $configLlm['llmodel_2'];
+    $configLlm['llmodel_3'] = $configLlm['llmodel_3' . "_$provider"] ?? $configLlm['llmodel_3'];
+    $configLlm['llmodel_4'] = $configLlm['llmodel_4' . "_$provider"] ?? $configLlm['llmodel_4'];
+    $configLlm['apiKey'] = $configLlm['apiKey' . "_$provider"] ?? $configLlm['apiKey'];
+    $configLlm['llurl'] = $configLlm['llurl' . "_$provider"] ?? $configLlm['llurl'];
+    logError("Remote LLM requested due to user $user and provider $provider. config adjusted", $logFile);
+    //logError("Remote LLM config: " . print_r($configLlm, true), $logFile);
     $useLock = false;
 }
 
@@ -174,9 +186,14 @@ if (!$configLlm) {
     exit;
 }
 
-// Call the remote LLM API
+// Call the remote LLM API for provider-based users, or local LLM for "any" user
+
+
 $apiKey = $configLlm['apiKey'];
 $model = $configLlm['llmodel'];
+
+// work around
+
 
 // optionally overwrite model based on input
 switch ($modelChoice) {
@@ -244,6 +261,16 @@ if ($response['status'] === 'error') {
     // Process the response as needed
     $messages = $response['messages'];
     logError("LLM response: " . print_r($response, true), $logFile);
+    $impact = $response['impact'] ?? null;
+    logError("LLM impact: " . print_r($impact, true), $logFile);
+    $impactText = '';
+    if ($impact) {
+        $energy = $impact['energy'] ?? null;
+        $co2 = $impact['co2'] ?? null;
+        if ($energy !== null && $co2 !== null) {
+            $impactText = "Impact: {$energy}, CO2: {$co2}";
+        }
+    }
     $output = $response['reply'];
     $output = preg_replace('/^Assistant:\s*/i', '', $output);
 }
@@ -252,7 +279,7 @@ if ($response['status'] === 'error') {
 $output = preg_replace('/<think>.*?<\/think>/is', '', $output);
 $output = trim($output);
 
-echo json_encode(value: ['status' => 'ok', 'text' => $output]);
+echo json_encode(value: ['status' => 'ok', 'text' => $output, "model" => $model, "provider" => $provider, "impact" => $impactText]);
 
 
 
