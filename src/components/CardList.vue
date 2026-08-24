@@ -148,10 +148,17 @@ function getCombinedText(): string {
 onMounted(async () => {
   try {
     // load main prompts and personalities from JSON file
+    // define the type of the prompts like this:
+    interface PromptData {
+      full: string;
+      brief: string;
+    }
     const response = await fetch('data/prompts.json');
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const prompts = await response.json();
+    const prompts: Record<string, PromptData> = await response.json();
     // Convert each prompt (a string) into an array of non-empty trimmed lines
+    // make sure to handle prompt values as PromptData objects with 'full' and 'brief' properties 
+    // and convert to strings if they are not already strings 
     itemPresets.value = Object.fromEntries(
       Object.entries(prompts || {}).map(([key, val]) => [
       key,
