@@ -30,7 +30,7 @@
     "sass-embedded": "^1.93.2",
     "typescript": "^5.2.2",
     "vite": "^8.0.16",
-    "vitest": "^4.1.8",
+    "vitest": "^4.1.11",
     "vue-tsc": "^3.0.8"
   }
 }
